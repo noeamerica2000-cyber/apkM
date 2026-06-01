@@ -1,0 +1,8 @@
+{
+  "appId": "com.angel.mimusica",
+  "appName": "Mi Musica",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": true
+  }
+}
