@@ -1,0 +1,52 @@
+name: Compilar APK
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar codigo
+        uses: actions/checkout@v4
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Agregar plataforma Android
+        run: npx cap add android
+
+      - name: Agregar permisos de musica al manifiesto
+        run: |
+          sed -i 's#<application#<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>\n    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>\n    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>\n    <application#' android/app/src/main/AndroidManifest.xml
+          sed -i 's#<application #<application android:requestLegacyExternalStorage="true" #' android/app/src/main/AndroidManifest.xml
+          echo "----- Manifiesto -----"
+          cat android/app/src/main/AndroidManifest.xml
+
+      - name: Sincronizar
+        run: npx cap sync android
+
+      - name: Compilar APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Subir APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mi-Musica-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
