@@ -17,7 +17,7 @@
   ::-webkit-scrollbar{width:0}
 
   .top{padding:calc(14px + var(--safe-top)) 16px 10px;display:flex;align-items:center;gap:12px;background:var(--bg2)}
-  .logo{width:32px;height:32px;flex-shrink:0}
+  .logo{width:36px;height:36px;flex-shrink:0;object-fit:contain;filter:drop-shadow(0 2px 5px rgba(0,0,0,.5))}
   .top h1{font-size:20px;font-weight:800;flex:1;letter-spacing:-.5px}
   .ic-btn{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--txt2)}
   .ic-btn:active{background:var(--hover)}
@@ -31,7 +31,7 @@
 
   /* pantalla inicial / buscador */
   .welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center;padding:30px;gap:18px}
-  .welcome .big-logo{width:120px;height:120px}
+  .welcome .big-logo{width:130px;height:130px;object-fit:contain;filter:drop-shadow(0 6px 18px rgba(0,0,0,.5))}
   .welcome h2{font-size:24px}
   .welcome p{color:var(--txt2);line-height:1.5;font-size:15px;max-width:320px}
   .btn-primary{padding:15px 34px;border-radius:500px;background:var(--accent);color:#000;font-weight:800;font-size:16px}
@@ -129,7 +129,7 @@
 <body>
 
 <div class="top">
-  <svg class="logo" viewBox="0 0 24 24"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1ed760"/><stop offset="1" stop-color="#0a8c3a"/></linearGradient></defs><circle cx="12" cy="12" r="11" fill="url(#g)"/><path d="M8 7v8.5a2.5 2.5 0 102 2.45V10h5V7H8z" fill="#000"/></svg>
+  <img class="logo" src="Foto/mascara.png" alt="" onerror="this.style.display='none'">
   <h1>Mi Música</h1>
   <button class="ic-btn" id="searchBtn" title="Buscar"><svg viewBox="0 0 24 24"><path d="M10 2a8 8 0 105.3 14l5.4 5.3 1.4-1.4-5.3-5.4A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/></svg></button>
   <button class="ic-btn" id="folderBtn" title="Cambiar carpeta"><svg viewBox="0 0 24 24"><path d="M10 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2h-8l-2-2z"/></svg></button>
@@ -199,7 +199,7 @@ function parseName(f){let b=f.replace(/\.[^.]+$/,'');let a='Desconocido',t=b;con
 /* ================= INICIO ================= */
 function showWelcome(){
   $('main').innerHTML=`<div class="welcome">
-    <svg class="big-logo" viewBox="0 0 24 24"><defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1ed760"/><stop offset="1" stop-color="#0a8c3a"/></linearGradient></defs><circle cx="12" cy="12" r="11" fill="url(#gg)"/><path d="M8 7v8.5a2.5 2.5 0 102 2.45V10h5V7H8z" fill="#000"/></svg>
+    <img class="big-logo" src="Foto/mascara.png" alt="" onerror="this.style.display='none'">
     <h2>Tu música</h2>
     <p>Busca la carpeta donde tienes tus canciones (FLAC y MP3) y reprodúcelas con letras sincronizadas. Todo desde tu teléfono, sin internet.</p>
     <button class="btn-primary" id="findBtn">Buscar mi carpeta de música</button>
@@ -216,14 +216,30 @@ async function startBrowse(){
   renderBrowser();
 }
 
+function showPermHelp(e){
+  $('main').innerHTML=`<div class="welcome">
+    <svg class="big-logo" viewBox="0 0 24 24" style="opacity:.5"><path fill="#1ed760" d="M10 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2h-8l-2-2z"/></svg>
+    <h2>Falta el permiso de archivos</h2>
+    <p>Android bloquea el acceso a tus carpetas hasta que actives <b>"Acceso a todos los archivos"</b> para esta app. Es un permiso especial, se activa una sola vez:</p>
+    <p style="text-align:left;background:#181818;padding:14px;border-radius:10px;font-size:14px;line-height:1.7">
+      1. Mantén presionado el icono de <b>Mi Música</b> → <b>Información de la app</b>.<br>
+      2. Entra a <b>Permisos</b>.<br>
+      3. Busca <b>Archivos y multimedia</b> (o "Almacenamiento").<br>
+      4. Activa <b>"Permitir acceso a todos los archivos"</b>.<br>
+      5. Vuelve aquí y dale Reintentar.</p>
+    <button class="btn-primary" id="retry">Reintentar</button>
+    <p style="font-size:11px;color:#555">${esc((e&&(e.message||e))+'').slice(0,120)}</p>
+  </div>`;
+  $('retry').onclick=()=>{S.browsePath='';renderBrowser();};
+}
+
 async function renderBrowser(){
   $('main').innerHTML=`<div class="loading"><div class="spin"></div> Leyendo carpeta…</div>`;
   let res;
   try{
     res = await FS.readdir({ path: S.browsePath, directory: DIR });
   }catch(e){
-    $('main').innerHTML=`<div class="welcome"><h2>No pude abrir la carpeta</h2><p>${esc(e.message||e)}</p><button class="btn-primary" id="retry">Reintentar</button></div>`;
-    $('retry').onclick=()=>{S.browsePath='';startBrowse();};
+    showPermHelp(e);
     return;
   }
   const items=res.files||[];
