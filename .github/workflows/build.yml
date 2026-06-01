@@ -28,6 +28,25 @@ jobs:
       - name: Agregar plataforma Android
         run: npx cap add android
 
+      - name: Generar icono de la app (mascara)
+        run: |
+          if [ -f www/Foto/mascara.png ]; then
+            sudo apt-get update && sudo apt-get install -y imagemagick
+            ICON=www/Foto/mascara.png
+            for pair in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
+              d=${pair%%:*}; sz=${pair##*:}
+              dir=android/app/src/main/res/mipmap-$d
+              mkdir -p "$dir"
+              convert "$ICON" -resize ${sz}x${sz} -background none -gravity center -extent ${sz}x${sz} "$dir/ic_launcher.png"
+              cp "$dir/ic_launcher.png" "$dir/ic_launcher_round.png"
+              cp "$dir/ic_launcher.png" "$dir/ic_launcher_foreground.png"
+            done
+            rm -rf android/app/src/main/res/mipmap-anydpi-v26
+            echo "Icono generado desde la mascara."
+          else
+            echo "No se encontro www/Foto/mascara.png; se usa el icono por defecto."
+          fi
+
       - name: Agregar permisos de musica al manifiesto
         run: |
           sed -i 's#<application#<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>\n    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>\n    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>\n    <application#' android/app/src/main/AndroidManifest.xml
